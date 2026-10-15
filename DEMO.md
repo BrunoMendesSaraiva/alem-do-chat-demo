@@ -1,7 +1,6 @@
 # Cola do apresentador
 
-> Cada etapa da palestra é uma tag do git. Esta versão é a da tag **demo-2**.
-> A seção da Demo 3 entra na tag seguinte (a cola completa está em `demo-3`).
+> Cada etapa da palestra é uma tag do git. Esta versão é a da tag **demo-3** (cola completa).
 
 ## Voltar a uma etapa (entre os ensaios)
 
@@ -79,3 +78,40 @@ Tag: `demo-2` (adiciona `knowledge/`, `AGENTS.md` e `CLAUDE.md`).
 - **Uso na demo:** se o agente apontar a divergência sozinho, ótimo. Se não, pergunte:
   `O login bloqueia depois de várias tentativas erradas?`
   O esperado é ele ler a nota, conferir `LoginEndpoints.cs` e dizer que a nota está desatualizada.
+
+---
+
+## Demo 3: multiagentes (dev → reviewer → qa)
+
+Tag: `demo-3` (adiciona `agents/dev.md`, `agents/reviewer.md`, `agents/qa.md`).
+
+Cada agente roda numa sessão separada e recebe o seu arquivo de papel como instrução
+(ex.: "Siga as instruções de `agents/reviewer.md`."). Rode na ordem e **não faça commit**
+entre eles: o reviewer e o QA leem o `git diff` deixado pelo dev.
+
+### Prompts
+
+| Agente   | Instrução            | Prompt                                                                      |
+|----------|----------------------|-----------------------------------------------------------------------------|
+| dev      | `agents/dev.md`      | `Implemente a alteração de e-mail do usuário (PUT /users/{id}/email).`      |
+| reviewer | `agents/reviewer.md` | `Analise a implementação feita pelo agente anterior.`                      |
+| qa       | `agents/qa.md`       | `Crie cenários para tentar encontrar falhas.`                              |
+
+### O que o reviewer provavelmente vai apontar
+
+- **Autorização (o principal):** o id vem da URL (`/users/{id}/email`). Sem conferir se ele é
+  igual ao `sub` do token, qualquer usuário logado altera o e-mail de outro (IDOR).
+  Contraste com `/profile`, que sempre pega o id do token (`knowledge/seguranca.md`).
+  Pior ainda se o dev esquecer o `RequireAuthorization()`.
+- **Validação:** se o dev reaproveitar o `EmailValidator`, herda o bug do e-mail vazio
+  (nesta tag a correção da Demo 1 **não** está aplicada). Se não reaproveitar, há regra duplicada.
+- **Duplicidade de e-mail:** precisa checar sem diferenciar maiúsculas e ignorar o próprio usuário
+  (trocar `ana@example.com` por `ANA@example.com` não deveria dar `409`).
+- **Tratamento de erros:** `404` para usuário inexistente, `403` para outro usuário,
+  `409` para e-mail em uso, `400` para e-mail inválido/vazio, corpo nulo sem `500`.
+
+### O que se espera do QA
+
+Testes para: e-mail válido, inválido, vazio, usuário inexistente e tentativa de alterar
+outro usuário. Se o dev não tratou a autorização ou o e-mail vazio, **testes falhando**
+são o resultado esperado e ótimo para a demo: o QA não corrige `src/`, só reporta.
