@@ -1,7 +1,7 @@
 # Cola do apresentador
 
-> Cada etapa da palestra é uma tag do git. Esta versão é a da tag **demo-1**.
-> As seções da Demo 2 e da Demo 3 entram nas tags seguintes (a cola completa está em `demo-3`).
+> Cada etapa da palestra é uma tag do git. Esta versão é a da tag **demo-2**.
+> A seção da Demo 3 entra na tag seguinte (a cola completa está em `demo-3`).
 
 ## Voltar a uma etapa (entre os ensaios)
 
@@ -44,3 +44,38 @@ curl -i -X POST http://localhost:5080/users -H "Content-Type: application/json" 
   -d '{"name":"Sem Email","email":"","password":"Senha@123"}'
 # Antes da correção: HTTP/1.1 201 Created
 ```
+
+---
+
+## Demo 2: base de conhecimento (Knowledge orienta, código valida)
+
+Tag: `demo-2` (adiciona `knowledge/`, `AGENTS.md` e `CLAUDE.md`).
+
+### Antes da demo
+
+- [ ] **Gerar o grafo do Graphify a partir de `knowledge/`** e deixar aberto numa aba.
+- [ ] Opcional: abrir `knowledge/` como vault no Obsidian (Graph view) como plano B.
+
+### Prompt
+
+`Como funciona a autenticação deste projeto?`
+
+### O que se espera
+
+- O agente segue o `AGENTS.md`/`CLAUDE.md`: abre `knowledge/index.md` → `autenticacao.md`
+  → `decisoes/ADR-002-token-30-min.md` **antes** de abrir o código.
+- Explica o **porquê dos 30 minutos**, que só existe na nota (o código não tem comentário):
+  revisão de segurança pediu sessões curtas, JWT não pode ser revogado,
+  60 minutos foi descartado pelo time de segurança, refresh token ficou para depois.
+- Confirma no código: `ExpirationMinutes = 30` em `src/DemoApi/Auth/TokenSettings.cs`,
+  uso em `TokenService.cs`, `ClockSkew = TimeSpan.Zero` e o teste
+  `Login_ReturnsTokenThatExpiresIn30Minutes` em `LoginTests.cs`.
+
+### Informação propositalmente desatualizada
+
+- **Onde:** `knowledge/seguranca.md`, seção "Proteção do login".
+- **O que diz:** "Após 5 tentativas de login erradas, a conta fica bloqueada por 15 minutos."
+- **O que o código faz:** nada disso. `Auth/LoginEndpoints.cs` não conta tentativas nem bloqueia.
+- **Uso na demo:** se o agente apontar a divergência sozinho, ótimo. Se não, pergunte:
+  `O login bloqueia depois de várias tentativas erradas?`
+  O esperado é ele ler a nota, conferir `LoginEndpoints.cs` e dizer que a nota está desatualizada.
